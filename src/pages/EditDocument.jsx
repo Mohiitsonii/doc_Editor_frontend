@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useSupplier } from '../Context/supplierContext.jsx';
+import { useSupplier } from '../context/supplierContext.jsx';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal.jsx';
 import { addCollaboratorToDoc, getAllCollaborators } from '../helpers/docs/doc.helper.js';
-import { useAuth } from '../Context/authContext.jsx';
+import { useAuth } from '../context/authContext.jsx';
 import Editor from './Editor.jsx';
 
 const EditDocument = () => {

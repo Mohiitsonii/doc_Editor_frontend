@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Modal from './Modal';
-import { useSupplier } from '../Context/supplierContext';
+import { useSupplier } from '../context/supplierContext';
 
 const Card = ({ cardData, deleteEvent }) => {
   const navigate = useNavigate();

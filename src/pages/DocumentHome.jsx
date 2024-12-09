@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../Context/authContext";
+import { useAuth } from "../context/authContext";
 import CardGrid from "../components/cards";
 import Loader from "../components/Loader";
 import Modal from "../components/Modal";
 import { createNewDoc, deleteTheDoc, getAllLoggedInUserDocs } from "../helpers/docs/doc.helper";
 import { toast } from "react-toastify";
-import { useSupplier } from "../Context/supplierContext";
+import { useSupplier } from "../context/supplierContext";
 import { useNavigate } from "react-router-dom";
 
 const DocumentHome = () => {
