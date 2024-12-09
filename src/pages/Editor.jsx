@@ -4,7 +4,7 @@ import 'quill/dist/quill.snow.css';
 import QuillCursors from 'quill-cursors';
 import { useSupplier } from '../context/supplierContext';
 import { useParams } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/authContext';
 import { updateDocument } from '../helpers/docs/doc.helper'; 
 
 Quill.register('modules/cursors', QuillCursors); 

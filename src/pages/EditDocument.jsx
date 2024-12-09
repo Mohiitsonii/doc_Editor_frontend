@@ -4,7 +4,7 @@ import { useSupplier } from '../context/supplierContext.jsx';
 import { toast } from 'react-toastify';
 import Modal from '../components/Modal.jsx';
 import { addCollaboratorToDoc, getAllCollaborators } from '../helpers/docs/doc.helper.js';
-import { useAuth } from '../context/AuthContext.jsx';
+import { useAuth } from '../context/authContext.jsx';
 import Editor from './Editor.jsx';
 
 const EditDocument = () => {
