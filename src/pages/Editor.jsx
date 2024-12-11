@@ -80,7 +80,8 @@ const Editor = () => {
       );
 
       if (result.status === 200) {
-        socket.emit('save-doc', { docId: id, data: content })
+        console.log('content content ',content)
+        socket.emit('save-doc', { docId: id, data: content.toString() })
         console.log('Document saved successfully');
       } else {
         console.log('Failed to save document:', result.message);
