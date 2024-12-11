@@ -14,7 +14,7 @@ const DocumentHome = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
 
-  const { loading, setLoading, shouldUpdate, triggerUpdate } = useSupplier();
+  const { loading, setLoading, shouldUpdate, triggerUpdate, socket } = useSupplier();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,20 +26,35 @@ const DocumentHome = () => {
 
   useEffect(() => {
     const setDocuments = async () => {
-      const documents = await getAllLoggedInUserDocs(auth?.token);
-      if (documents?.status === 200) {
-        console.log("Fetched Documents:", documents?.data); // Debugging
-        setData(documents?.data);
-        return;
+      try {
+        const documents = await getAllLoggedInUserDocs(auth?.token);
+
+        if (documents?.status === 200) {
+          console.log("Fetched Documents:", documents?.data.data);
+          setData(documents?.data);
+
+          // Trigger socket join for each document
+          documents?.data.data.forEach((doc) => {
+            if (socket) {
+              socket.emit("joinRoom", { roomId: doc._id,username:"abc" });
+            }
+          });
+
+          return;
+        }
+
+        toast.error(documents?.message);
+      } catch (error) {
+        console.error("Error fetching documents:", error);
+        toast.error("Failed to fetch documents.");
       }
-      toast.error(documents?.message);
     };
 
     if (auth?.token) {
       setDocuments();
       document.title = `Welcome ${auth?.user?.username} 👋`;
     }
-  }, [auth?.token, shouldUpdate]);
+  }, [auth?.token, shouldUpdate, socket]);
 
   const handleAdd = async (e) => {
     e.preventDefault();
@@ -51,18 +66,19 @@ const DocumentHome = () => {
       if (result?.status === 201) {
         toast.success("Document Created Successfully");
         setTitle("");
-        setContent(""); // Clear form fields
+        setContent("");
 
-        // Programmatically close the modal
         const closeModalButton = document.getElementById("closeTheModal");
-        if (closeModalButton) {
-          closeModalButton.click();
-        }
+        if (closeModalButton) closeModalButton.click();
 
-        // Fetch updated documents
         const documents = await getAllLoggedInUserDocs(auth?.token);
         if (documents?.status === 200) {
-          setData(documents?.data); // Update the state with new data
+          setData(documents?.data);
+
+          // Trigger socket join for the new document
+          if (socket) {
+            socket.emit("join", { roomId: result.data._id });
+          }
         }
 
         return;
@@ -79,33 +95,35 @@ const DocumentHome = () => {
 
   const handleDelete = async (id) => {
     setLoading(true);
-    const res = await deleteTheDoc(id, auth?.token).finally(() => setLoading(false));
-    if (res?.status === 200) {
-      toast.success(res.message);
-      triggerUpdate();
-      return;
-    }
+    try {
+      const res = await deleteTheDoc(id, auth?.token);
+      if (res?.status === 200) {
+        toast.success(res.message);
+        triggerUpdate();
+        return;
+      }
 
-    toast.error(res?.message);
+      toast.error(res?.message);
+    } catch (error) {
+      console.error("Error deleting document:", error);
+      toast.error("An error occurred while deleting the document.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-50 to-blue-100">
-      {/* Main Content */}
       <div className="flex-1 p-6">
-
-        {/* Header Section */}
         <div className="flex justify-between items-center mb-6">
-        <button
-          type="button"
-          className="btn btn-light"
-          onClick={() => {
-            navigate('/home');
-          }}
-          style={{ border: '1px solid #ccc' }}
-        >
-          <i className="bi bi-arrow-left"></i> Back
-        </button>
+          <button
+            type="button"
+            className="btn btn-light"
+            onClick={() => navigate('/home')}
+            style={{ border: '1px solid #ccc' }}
+          >
+            <i className="bi bi-arrow-left"></i> Back
+          </button>
           <button
             type="button"
             className="px-6 py-3 bg-blue-600 text-white rounded-lg shadow-xl hover:bg-blue-700 text-lg font-semibold flex items-center transition duration-300"
@@ -118,7 +136,6 @@ const DocumentHome = () => {
 
         <CardGrid data={data} deleteEvent={handleDelete} loading={loading} />
 
-        {/* Modal for Creating New Document */}
         <Modal
           modalId="createDoc"
           content={
@@ -126,13 +143,10 @@ const DocumentHome = () => {
               className="space-y-8 bg-gradient-to-br from-blue-500 to-blue-700 p-8 rounded-3xl shadow-2xl max-w-lg mx-auto transition-all duration-500 ease-in-out"
               onSubmit={handleAdd}
             >
-              {/* Form Header */}
               <h2 className="text-3xl font-bold text-center mb-4 text-white">Create New Document</h2>
               <p className="text-center text-blue-200 mb-6 text-lg">
                 Add a title and content to create your document.
               </p>
-
-              {/* Title Field */}
               <div className="w-full">
                 <label
                   htmlFor="title"
@@ -150,8 +164,6 @@ const DocumentHome = () => {
                   required
                 />
               </div>
-
-              {/* Content Field */}
               <div className="w-full">
                 <label
                   htmlFor="content"
@@ -168,8 +180,6 @@ const DocumentHome = () => {
                   required
                 ></textarea>
               </div>
-
-              {/* Submit Button */}
               <div className="flex justify-center">
                 <button
                   type="submit"

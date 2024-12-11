@@ -10,7 +10,7 @@ import { updateDocument } from '../helpers/docs/doc.helper';
 Quill.register('modules/cursors', QuillCursors); 
 
 const Editor = () => {
-  const { darkMode, setQuill, currentDoc } = useSupplier(); 
+  const { darkMode, setQuill, currentDoc,socket } = useSupplier(); 
   const { id } = useParams(); 
   const { auth } = useAuth(); 
   const [content, setContent] = useState('');
@@ -80,6 +80,7 @@ const Editor = () => {
       );
 
       if (result.status === 200) {
+        socket.emit('save-doc', { docId: id, data: content })
         console.log('Document saved successfully');
       } else {
         console.log('Failed to save document:', result.message);
