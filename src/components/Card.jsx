@@ -6,15 +6,14 @@ import { useSupplier } from '../context/supplierContext';
 const Card = ({ cardData, deleteEvent }) => {
   const navigate = useNavigate();
   const { setCurrentDoc } = useSupplier();
-
-  // Function to generate content preview
   const getContentPreview = (content) => {
-    if (!content || content.trim() === '') {
+    if (!content) {
       return 'No content available';
     }
-    const plainText = content.replace(/<\/?[^>]+(>|$)/g, ''); // Strip HTML tags
+    const plainText = typeof content === 'string' ? content : content?.text || ''; // Adjust logic for nested objects
     return plainText.length > 50 ? `${plainText.slice(0, 50)}...` : plainText;
   };
+  
 
   return (
     <>

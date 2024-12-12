@@ -7,12 +7,12 @@ import { useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { updateDocument } from '../helpers/docs/doc.helper'; 
 
-Quill.register('modules/cursors', QuillCursors); 
+Quill.register('modules/cursors', QuillCursors);
 
 const Editor = () => {
-  const { darkMode, setQuill, currentDoc,socket } = useSupplier(); 
-  const { id } = useParams(); 
-  const { auth } = useAuth(); 
+  const { darkMode, setQuill, currentDoc, socket } = useSupplier();
+  const { id } = useParams();
+  const { auth } = useAuth();
   const [content, setContent] = useState('');
   const [title, setTitle] = useState('');
   const [editorInstance, setEditorInstance] = useState(null);
@@ -46,13 +46,14 @@ const Editor = () => {
           ['image', 'code-block'],
         ],
       },
+      clipboard: true,
     });
 
     setQuill(q);
 
     q.on('text-change', () => {
       const newContent = q.root.innerHTML;
-      setContent(newContent); 
+      setContent(newContent);
     });
 
     setEditorInstance(q);
@@ -61,11 +62,15 @@ const Editor = () => {
   useEffect(() => {
     if (currentDoc && editorInstance) {
       setTitle(currentDoc.title || '');
-  
-        editorInstance.clipboard.dangerouslyPasteHTML(currentDoc.content);
+      
+      if (currentDoc.content) {
+        editorInstance.root.innerHTML = currentDoc.content;
+        setContent(currentDoc.content); // Sync content with the editor
+      } else {
+        console.warn('No content found for the document');
       }
+    }
   }, [currentDoc, editorInstance]);
-  
   const saveDocument = async () => {
     try {
       if (!id) {
@@ -73,16 +78,18 @@ const Editor = () => {
         return;
       }
 
-      const result = await updateDocument(
-        id,
-        { title, content },
-        auth?.token
-      );
-
+      const htmlContent = editorInstance.root.innerHTML;
+  
+      const updatedDocument = { title, content: htmlContent };
+  
+      const result = await updateDocument(id, updatedDocument, auth?.token);
+  
       if (result.status === 200) {
-        console.log('content content ',content)
-        socket.emit('save-doc', { docId: id, data: content.toString() })
         console.log('Document saved successfully');
+  
+        console.log('updateddoc',updateDocument)
+        socket.emit('save-doc', { docId: id, data: updatedDocument });
+  
       } else {
         console.log('Failed to save document:', result.message);
       }
@@ -90,6 +97,38 @@ const Editor = () => {
       console.error('Error while saving document:', error.message);
     }
   };
+  
+
+  // Listen for 'save-doc-receive' event and update the editor content
+  useEffect(() => {
+    const handleSaveDocReceive = (data) => {
+      console.log('Received document update:', data);
+
+      if (data) {
+        // console.log('16789',data,editorInstance)
+        
+        if (editorInstance) {
+          console.log('1fgf',data)
+
+          if (data.data.title) {
+            console.log('1',data)
+console.log('56789',data.data.title)
+            setTitle(data.data.title);
+          }
+          console.log('6t789',data.data.content)
+
+          setContent('fghjk');
+        }
+      }
+    };
+
+    socket.on('save-doc-receive', handleSaveDocReceive);
+
+    // Cleanup listener on component unmount
+    return () => {
+      socket.off('save-doc-receive', handleSaveDocReceive);
+    };
+  }, [editorInstance, socket, id]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -101,34 +140,32 @@ const Editor = () => {
 
   return (
     <div className="editor-page">
-    <h1 className="text-center my-4">Document Editor</h1>
-    <div className="container">
-      <input
-        type="text"
-        className="form-control mb-3"
-        placeholder="Enter document title..."
-        value={title}
-        onChange={(e) => setTitle(e.target.value)} 
-      />
-  
-      <div ref={wrapperRef}></div>
-  
-      <textarea
-        className="form-control mt-3"
-        rows="5"
-        placeholder="View or update content here..."
-        value={content}
-        onChange={(e) => {
-          const updatedContent = e.target.value;
-          setContent(updatedContent);
-          if (editorInstance) {
-            editorInstance.root.innerHTML = updatedContent; 
-          }
-        }}
-      ></textarea>
+      <h1 className="text-center my-4">Document Editor</h1>
+      <div className="container">
+        <input
+          type="text"
+          className="form-control mb-3"
+          placeholder="Enter document title..."
+          value={title}
+          onChange={(e) => setTitle(e.target.value)} 
+        />
+        <div ref={wrapperRef}></div>
+
+        <textarea
+          className="form-control mt-3"
+          rows="5"
+          placeholder="View or update content here..."
+          value={content}
+          onChange={(e) => {
+            const updatedContent = e.target.value;
+            setContent(updatedContent);
+            if (editorInstance) {
+              editorInstance.root.innerHTML = updatedContent;
+            }
+          }}
+        ></textarea>
+      </div>
     </div>
-  </div>
-  
   );
 };
 

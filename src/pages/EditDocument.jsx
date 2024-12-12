@@ -57,11 +57,20 @@ const EditDocument = () => {
       quill.enable();
     });
   
-    // Listen for updates to the document from other users
-    socket.on('save-doc-receive', (updatedContent) => {
-      quill.setContents(updatedContent);
-      toast.info('Document content has been updated.');
-    });
+  
+    const handleSaveDocReceive = (data) => {
+      console.log('Received document update:', data);
+
+      if (data && data.docId === id && editorRef.current) {
+        if (data.title) {
+          console.log('1')
+          setTitle(data.title);
+        }
+        setContent('fdghjkl');
+      }
+    };
+
+    socket.on('save-doc-receive', handleSaveDocReceive);
   
     // Clean up event listeners on unmount
     return () => {
