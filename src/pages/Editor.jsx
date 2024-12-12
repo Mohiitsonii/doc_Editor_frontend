@@ -98,42 +98,34 @@ const Editor = () => {
     }
   };
   
-
-  // Listen for 'save-doc-receive' event and update the editor content
   useEffect(() => {
     const handleSaveDocReceive = (data) => {
       console.log('Received document update:', data);
-
-      if (data) {
-        // console.log('16789',data,editorInstance)
-        
-        if (editorInstance) {
-          console.log('1fgf',data)
-
-          if (data.data.title) {
-            console.log('1',data)
-console.log('56789',data.data.title)
-            setTitle(data.data.title);
-          }
-          console.log('6t789',data.data.content)
-
-          setContent('fghjk');
+  
+      if (data && editorInstance) {
+        if (data.data.title) {
+          setTitle(data.data.title);
+        }
+  
+        if (data.data.content) {
+          console.log('test')
+          editorInstance.root.innerHTML = data.data.content;
+          setContent(data.data.content);
         }
       }
     };
-
+  
     socket.on('save-doc-receive', handleSaveDocReceive);
-
-    // Cleanup listener on component unmount
+  
     return () => {
       socket.off('save-doc-receive', handleSaveDocReceive);
     };
-  }, [editorInstance, socket, id]);
+  }, [editorInstance, socket]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       saveDocument();
-    }, 10000);
+    }, 1000);
 
     return () => clearTimeout(timeoutId);
   }, [content, title]);
@@ -150,20 +142,6 @@ console.log('56789',data.data.title)
           onChange={(e) => setTitle(e.target.value)} 
         />
         <div ref={wrapperRef}></div>
-
-        <textarea
-          className="form-control mt-3"
-          rows="5"
-          placeholder="View or update content here..."
-          value={content}
-          onChange={(e) => {
-            const updatedContent = e.target.value;
-            setContent(updatedContent);
-            if (editorInstance) {
-              editorInstance.root.innerHTML = updatedContent;
-            }
-          }}
-        ></textarea>
       </div>
     </div>
   );

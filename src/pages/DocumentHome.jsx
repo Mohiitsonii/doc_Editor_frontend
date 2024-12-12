@@ -24,37 +24,57 @@ const DocumentHome = () => {
     }
   }, [auth]);
 
+
   useEffect(() => {
     const setDocuments = async () => {
       try {
         const documents = await getAllLoggedInUserDocs(auth?.token);
-
+    
         if (documents?.status === 200) {
           console.log("Fetched Documents:", documents?.data.data);
           setData(documents?.data);
-
-          // Trigger socket join for each document
-          documents?.data.data.forEach((doc) => {
+    
+          // Add a check to ensure socket is ready before joining
+          if (socket && socket.connected) {
+            documents?.data.data.forEach((doc) => {
+              console.log(`Attempting to join room: ${doc._id}`);
+              socket.emit("join", {  
+                roomId: doc._id,
+                username: auth?.user?.username || "Anonymous"  
+              });
+            });
+          } else {
+            console.warn('Socket not ready or not connected');
+            
             if (socket) {
-              socket.emit("joinRoom", { roomId: doc._id,username:"abc" });
+              socket.on('connect', () => {
+                console.log('Socket reconnected, joining rooms');
+                documents?.data.data.forEach((doc) => {
+                  socket.emit("join", {  
+                    roomId: doc._id,
+                    username: auth?.user?.username || "Anonymous"  
+                  });
+                });
+              });
             }
-          });
-
+          }
+    
           return;
         }
-
+    
         toast.error(documents?.message);
       } catch (error) {
         console.error("Error fetching documents:", error);
         toast.error("Failed to fetch documents.");
       }
     };
-
+    
     if (auth?.token) {
       setDocuments();
       document.title = `Welcome ${auth?.user?.username} 👋`;
     }
-  }, [auth?.token, shouldUpdate, socket]);
+  }, [auth?.token, shouldUpdate, socket, auth?.user?.username]);
+
 
   const handleAdd = async (e) => {
     e.preventDefault();
