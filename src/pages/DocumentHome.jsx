@@ -38,7 +38,7 @@ const DocumentHome = () => {
           if (socket && socket.connected) {
             documents?.data.data.forEach((doc) => {
               console.log(`Attempting to join room: ${doc._id}`);
-              socket.emit("join", {  
+              socket.emit("joinRoom", {  
                 roomId: doc._id,
                 username: auth?.user?.username || "Anonymous"  
               });
@@ -50,7 +50,7 @@ const DocumentHome = () => {
               socket.on('connect', () => {
                 console.log('Socket reconnected, joining rooms');
                 documents?.data.data.forEach((doc) => {
-                  socket.emit("join", {  
+                  socket.emit("joinRoom", {  
                     roomId: doc._id,
                     username: auth?.user?.username || "Anonymous"  
                   });
@@ -97,7 +97,7 @@ const DocumentHome = () => {
 
           // Trigger socket join for the new document
           if (socket) {
-            socket.emit("join", { roomId: result.data._id });
+            socket.emit("joinRoom", { roomId: result.data._id });
           }
         }
 
